@@ -1,0 +1,49 @@
+version: "3.9"
+services:
+  traefik:
+    image: traefik:v2.4
+    command:
+    - "--providers.docker=true"
+    - "--providers.docker.swarmMode=true"
+    - "--providers.docker.exposedbydefault=false"
+    - "--entrypoints.web.address=:80"
+    - "--entrypoints.websecure.address=:443"
+    - "--providers.docker.network=traefik_public"
+    - "--api.insecure=true"
+    - "--ping=true"
+    - "--serversTransport.insecureSkipVerify=true"
+    ports:
+    - "80:80"
+    - "443:443"
+    - "8082:8080"
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+    - traefik_public
+    deploy:
+      mode: global
+      placement:
+        constraints:
+        - node.role == manager
+
+  jbpm:
+    image: quay.io/kiegroup/jbpm-server-full
+    environment:
+      JAVA_OPTS: -Xmx4096m -XX:MetaspaceSize=2048 -XX:MaxMetaspaceSize=4096m
+    networks:
+    - traefik_public
+    deploy:
+      labels:
+      - traefik.enable=true
+      - traefik.http.services.jbpm.loadbalancer.server.port=8080
+      - traefik.http.services.jbpm.loadbalancer.sticky=true
+      - traefik.http.services.grecco.loadbalancer.sticky.cookie.name=jbpm
+      - traefik.http.routers.jbpm.rule=Host(`jbpm.example.org`)
+      - traefik.http.routers.jbpm.entrypoints=web
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+
+networks:
+  traefik_public:
+    external: true
