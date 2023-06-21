@@ -53,3 +53,6 @@ Depois de criar a rede, você pode implantar a stack com o comando `docker stack
 ```bash
 docker stack deploy -c jbpm.yaml jbpm
 ```
+
+Veja abaixo 3 replicas do jbpm funcionando como traefik.
+[jBPM](https://user-images.githubusercontent.com/125938946/247745739-267525fe-8d9c-4503-9a07-ad2a98199d90.png)
